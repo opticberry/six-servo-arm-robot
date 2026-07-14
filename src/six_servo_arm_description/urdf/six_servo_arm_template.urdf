@@ -1,0 +1,367 @@
+<?xml version="1.0"?>
+<robot name="six_servo_arm">
+  <!--
+    This is a teaching-style URDF template for your 6-servo arm.
+
+    URDF only cares about two core things:
+    1) link  = a rigid body that does not move relative to itself
+    2) joint = a movable connection between two links
+
+    For your robot:
+    - servo 0..4 are rotational joints in the main arm chain
+    - servo 5 drives the gripper opening/closing
+    - the metal brackets between servos are grouped as links
+
+    What you will mainly edit later:
+    - joint origin: where the servo axis sits relative to the parent link
+    - joint axis: which direction that servo rotates around
+    - joint limit: the allowed angle range
+    - visual/collision geometry: later replace the simple box/cylinder shapes with your STL meshes
+
+    The finger section below uses a common simplification:
+    - left_finger is the actively driven finger
+    - right_finger follows with a mimic joint
+  -->
+
+  <material name="dark_gray">
+    <color rgba="0.25 0.25 0.28 1.0"/>
+  </material>
+  <material name="light_gray">
+    <color rgba="0.75 0.75 0.78 1.0"/>
+  </material>
+  <material name="white">
+    <color rgba="0.95 0.95 0.95 1.0"/>
+  </material>
+  <material name="silver">
+    <color rgba="0.82 0.84 0.88 1.0"/>
+  </material>
+
+  <link name="base_link">
+    <!--
+      base_link = the fixed base of the whole robot.
+      Think of it as the root body mounted on the table or chassis.
+    -->
+    <visual>
+      <!-- visual only affects how it looks in RViz/Gazebo -->
+      <!-- base_link frame is kept at the cylinder bottom center so the base sits on the ground plane -->
+      <origin xyz="0 0 0.033" rpy="0 0 0"/>
+      <geometry>
+        <!-- diameter 11 cm, height 6.6 cm -->
+        <cylinder radius="0.055" length="0.066"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <!-- collision affects collision checking; keep it simple -->
+      <origin xyz="0 0 0.033" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.055" length="0.066"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <!-- inertial is used by physics simulators; rough placeholder values are fine at first -->
+      <origin xyz="0 0 0.033" rpy="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="0.002" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.002"/>
+    </inertial>
+  </link>
+
+  <link name="link_1">
+    <!--
+      link_1 = the rigid structure carried by servo 0 and ending at servo 1.
+      In your arm, this is the first body after the rotating base.
+    -->
+    <visual>
+      <!-- link1 is modeled as a rectangular block: length 4.4 cm, width 2.2 cm, height 3.6 cm -->
+      <!-- its frame is placed at the bottom center, so the box center is half the height above the joint -->
+      <origin xyz="0 0 0.018" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.036"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.018" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.036"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.018" rpy="0 0 0"/>
+      <mass value="0.6"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_0_base_yaw" type="revolute">
+    <!--
+      servo 0: base rotation
+
+      parent = base_link   (the body before this joint)
+      child  = link_1      (the body moved by this joint)
+
+      origin = where this servo axis is located in the parent frame
+      axis   = rotation axis direction
+
+      Here axis="0 0 1" means rotation around Z, matching your base turntable idea.
+    -->
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <!-- the top center of the 6.6 cm base cylinder coincides with the servo-0 axis -->
+    <origin xyz="0 0 0.066" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <!-- angles are in radians; +/-2.35619 is about +/-135 degrees -->
+    <limit lower="-2.35619" upper="2.35619" effort="5" velocity="2"/>
+  </joint>
+
+  <link name="link_2">
+    <!--
+      link_2 = the rigid section between servo 1 and servo 2.
+      This is one of the "arm segments" you see in the middle.
+    -->
+    <visual>
+      <origin xyz="0 0 0.053" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.106"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.062" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.053" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_1_shoulder_pitch" type="revolute">
+    <!--
+      servo 1: shoulder-like forward/backward motion
+
+      axis="0 1 0" is a placeholder meaning rotation about Y.
+      If the direction is wrong in RViz, flip it to "0 -1 0".
+      If the whole axis is wrong, you may need X or Z instead.
+    -->
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin xyz="0 0 0.036" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="-2.35619" upper="2.35619" effort="5" velocity="2"/>
+  </joint>
+
+  <link name="link_3">
+    <!-- link_3 = the rigid section between servo 2 and servo 3 -->
+    <visual>
+      <origin xyz="0 0 0.0417" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.0833"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0417" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.0833"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.0417" rpy="0 0 0"/>
+      <mass value="0.45"/>
+      <inertia ixx="0.0008" ixy="0.0" ixz="0.0" iyy="0.0008" iyz="0.0" izz="0.0008"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_2_elbow_pitch" type="revolute">
+    <!-- servo 2: elbow-like forward/backward motion -->
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin xyz="0 0 0.106" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.35619" upper="2.35619" effort="5" velocity="2"/>
+  </joint>
+
+  <link name="link_4">
+    <!--
+      link_4 = the rigid end section between servo 3 and servo 4.
+      You can think of this as the wrist mounting body.
+    -->
+    <visual>
+      <origin xyz="0 0 0.035" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.022 0.044 0.07"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0485" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.041 0.02 0.043"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.035" rpy="0 0 0"/>
+      <mass value="0.35"/>
+      <inertia ixx="0.0005" ixy="0.0" ixz="0.0" iyy="0.0005" iyz="0.0" izz="0.0005"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_3_wrist_pitch" type="revolute">
+    <!-- servo 3: wrist-like forward/backward motion -->
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <origin xyz="0 0 0.0833" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="-2.35619" upper="2.35619" effort="4" velocity="2"/>
+  </joint>
+
+  <link name="gripper_base">
+    <!--
+      gripper_base = the body mounted after servo 4.
+      The whole gripper assembly rotates with joint_4.
+    -->
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.0065 0.05 0.05"/>
+      </geometry>
+      <material name="light_gray"/>
+    </visual>
+    <collision>
+      <!-- simplified collision block so the wrist can rotate without frequent false positives -->
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.041 0.043 0.02"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.02 0 0.025" rpy="0 0 0"/>
+      <mass value="0.25"/>
+      <inertia ixx="0.0003" ixy="0.0" ixz="0.0" iyy="0.0003" iyz="0.0" izz="0.0003"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_4_wrist_yaw" type="revolute">
+    <!--
+      servo 4: rotates the gripper around its local vertical axis.
+      This is the "wrist rotation" before the fingers.
+    -->
+    <parent link="link_4"/>
+    <child link="gripper_base"/>
+    <origin xyz="0 0 0.07" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.35619" upper="2.35619" effort="3" velocity="2"/>
+  </joint>
+
+  <link name="left_finger">
+    <!--
+      left_finger = one jaw of the gripper.
+      We model it separately so MoveIt can understand the opening width and collisions better.
+    -->
+    <visual>
+      <!-- finger geometry is local to the side hinge; fingertip length stays about 11 cm -->
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.012 0.104"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <visual>
+      <!-- fingertip pad -->
+      <origin xyz="0 0 0.104" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.02 0.012"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <!-- simplified rectangular collision keeps grasp checks predictable -->
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.014 0.014 0.104"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <mass value="0.05"/>
+      <inertia ixx="0.00005" ixy="0.0" ixz="0.0" iyy="0.00005" iyz="0.0" izz="0.00005"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_5_gripper" type="revolute">
+    <!--
+      servo 5: active gripper joint
+
+      This is a simplified model of the gripper mechanism.
+      In the real mechanism, linkages may be more complex, but for planning it is common
+      to represent one finger as the active side.
+    -->
+    <parent link="gripper_base"/>
+    <child link="left_finger"/>
+    <origin xyz="0 0.055 0.01" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.6" upper="0.6" effort="2" velocity="2"/>
+  </joint>
+
+  <link name="right_finger">
+    <!-- right_finger = the other jaw of the gripper -->
+    <visual>
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.012 0.104"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.104" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.02 0.012"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.014 0.014 0.104"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.052" rpy="0 0 0"/>
+      <mass value="0.05"/>
+      <inertia ixx="0.00005" ixy="0.0" ixz="0.0" iyy="0.00005" iyz="0.0" izz="0.00005"/>
+    </inertial>
+  </link>
+
+  <joint name="right_finger_joint" type="revolute">
+    <!--
+      mimic means this finger follows joint_5_gripper automatically.
+      multiplier="-1.0" makes it move in the opposite direction,
+      which matches the usual open/close behavior of two symmetric fingers.
+    -->
+    <parent link="gripper_base"/>
+    <child link="right_finger"/>
+    <origin xyz="0 -0.055 0.01" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.6" upper="0.0" effort="2" velocity="2"/>
+    <mimic joint="joint_5_gripper" multiplier="-1.0" offset="0.0"/>
+  </joint>
+
+  <link name="tool0"/>
+
+  <joint name="tool0_fixed" type="fixed">
+    <!--
+      tool0 is not a physical part.
+      It is a coordinate frame placed at the gripper's useful working point,
+      usually near the center between the two fingers.
+
+      MoveIt often uses tool0 as the end-effector reference frame.
+    -->
+    <parent link="gripper_base"/>
+    <child link="tool0"/>
+    <origin xyz="0 0 0.10" rpy="0 0 0"/>
+  </joint>
+</robot>

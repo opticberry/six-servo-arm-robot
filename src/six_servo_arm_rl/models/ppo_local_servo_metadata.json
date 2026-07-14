@@ -1,0 +1,15 @@
+{
+  "model": "models\\ppo_local_servo.zip",
+  "total_timesteps": 100000,
+  "seed": 1,
+  "device": "cuda",
+  "initial_error_limit_mm": 25.0,
+  "max_step_mm": 4.0,
+  "stop_error_mm": 2.0,
+  "max_steps": 12,
+  "action_effectiveness": 0.9,
+  "noise_std_mm": 0.3,
+  "mean_reward": 23.102435170000003,
+  "std_reward": 6.956367623369279,
+  "eval_episodes": 300
+}

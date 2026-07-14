@@ -1,0 +1,9 @@
+# Default initial positions for six_servo_arm's ros2_control fake system
+
+initial_positions:
+  joint_0_base_yaw: 0
+  joint_1_shoulder_pitch: 0
+  joint_2_elbow_pitch: 0
+  joint_3_wrist_pitch: 0
+  joint_4_wrist_yaw: 0
+  joint_5_gripper: 0

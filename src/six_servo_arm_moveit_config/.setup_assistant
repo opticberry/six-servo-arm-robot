@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: six_servo_arm_description
+    relative_path: urdf/six_servo_arm_template.urdf
+  srdf:
+    relative_path: config/six_servo_arm.srdf
+  package_settings:
+    author_name: user
+    author_email: user@example.com
+    generated_timestamp: 1781255097
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
